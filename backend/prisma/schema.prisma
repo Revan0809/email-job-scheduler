@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EmailStatus {
+  scheduled
+  sent
+  failed
+}
+
+model User {
+  id        String   @id @default(cuid())
+  googleId  String   @unique
+  email     String   @unique
+  name      String
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  slackIntegration SlackIntegration?
+  batches          EmailBatch[]
+  emails           Email[]
+}
+
+model SlackIntegration {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamName    String?
+  webhookUrl  String
+  accessToken String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EmailBatch {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject     String
+  body        String
+  startTime   DateTime
+  delayMs     Int
+  hourlyLimit Int
+  totalCount  Int
+  createdAt   DateTime @default(now())
+
+  emails Email[]
+}
+
+model Email {
+  id            String      @id @default(cuid())
+  batchId       String
+  batch         EmailBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipient     String
+  subject       String
+  body          String
+  sender        String
+  status        EmailStatus @default(scheduled)
+  scheduledTime DateTime
+  sentTime      DateTime?
+  errorMessage  String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([status])
+  @@index([sender])
+  @@index([userId])
+  @@index([batchId])
+}

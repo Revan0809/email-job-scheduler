@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.next/
+*.log
+.env
+.env.local
+backend/.ethereal-account.json
+.DS_Store
+.claude/
+*.tsbuildinfo
